@@ -55,7 +55,9 @@ d3.json(API_URL + current, function(error, odata) {
 		.data(graph.nodes)
 		.enter()
 			.append("a")
-			.attr("xlink:href", function (d) { return window.location.href+"?"+d.name })
+			.attr("xlink:href", function (d) { 
+					return window.location.href.split('?')[0]+"?"+d.name 
+			})
 				.append("text")
 				.attr("class", "label")
 				.attr("text-anchor", "middle")				
