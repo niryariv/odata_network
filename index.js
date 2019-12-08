@@ -7,10 +7,8 @@ var width  = svg.attr("width"),
 	height = svg.attr("height");
 
 
-var nodes = []; // [{id:"nodi"}, {id:"nod"}, {id:1}, {id:121}];
-var links = []; //[{ source: 'nod', target: 'nodi' }
-			// , { source: 'nod', target: 121 }
-			// , { source: 'nod', target: 1 }];
+var nodes = []; 
+var links = []; 
 
 var center_node;
 
@@ -21,12 +19,6 @@ var simulation = d3.forceSimulation(nodes)
 	.force('link', d3.forceLink().id(function (d) { return d.id }).links(links))
 	.on('tick', render);
 
-
-//TODO:
-
-// - load nodes from API (use add_node())
-// - convert to d3 format
-// - render()
 
 // why isn't this part of remove_node? because we actually want to keep the original node. 
 // remove_node is really just a helper
@@ -61,19 +53,22 @@ function toggle_node(node){
 }
 
 function node_exists(node){
-	return (_.findWhere(nodes, {id:node.id}) ? true : false);
+	return (_.findWhere(nodes, {id:node.id}) || false);
 }
 
 function add_node(new_node, parent=false){
-	// debugger
-	if (node_exists(new_node)) return false;
+	exists = node_exists(new_node);
+	if (exists) return exists;
 
-	nodes.push(new_node);
+	i = nodes.push(new_node);
 	if (parent) links.push({ source: parent.id, target: new_node.id});
 
 	simulation.nodes(nodes);
 	simulation.force('link', d3.forceLink().id(function (d) { return d.id }).links(links))
 	simulation.alpha(1).restart();
+	
+	console.log("NEW:", nodes[i-1]);
+	return nodes[i-1];
 }
 
 function render() {
@@ -87,7 +82,7 @@ function render() {
 		.on('click', function (d) { return center_on_node(d) }) 
 		.on('click', function (d) { return toggle_node(d) }) 
 		.text(function (d) { return d.display_name })
-		.style('font-size', function (d) { return d == center_node ? '20px' : '10px' })
+		.style('font-size', function (d) { return d.id == center_node.id ? '20px' : '10px' })
 		.attr('x', function (d) { return d.x; })
 		.attr('y', function (d) { return d.y; });
 
@@ -116,13 +111,14 @@ function load_nodes_under(node_id){
 	console.log("load_nodes_under:", node_id);
 	d3.json(api_url(node_id), function(odata){
 		odata.group.id = odata.group.name;
-		add_node(odata.group, center_node ? center_node : false);
-		center_node = odata.group;
+		var new_center = add_node(odata.group, center_node ? center_node : false);
 
 		odata.related_groups.forEach(function (g) {
 			g.id = g.name;
-			add_node(g, center_node);
+			add_node(g, new_center);
 		});
+		
+		center_on_node(new_center);
 	});
 }
 
