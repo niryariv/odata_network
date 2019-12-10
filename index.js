@@ -42,7 +42,8 @@ function center_on_node(node){
 	var dcy = (height / 2 - node.y);
 	g.transition().attr("transform", "translate(" + dcx + "," + dcy + ")");
 
-	simulation.alpha(1).restart();
+	simulation.force('center', d3.forceCenter(center_node.x, center_node.y))
+	simulation.alpha(0.1).restart();
 
 	return true;
 }
@@ -64,10 +65,10 @@ function add_node(new_node, parent=false){
 	if (parent) links.push({ source: parent.id, target: new_node.id});
 
 	simulation.nodes(nodes);
-	simulation.force('link', d3.forceLink().id(function (d) { return d.id }).links(links))
-	simulation.alpha(1).restart();
+	// simulation.force('link', d3.forceLink().id(function (d) { return d.id }).links(links))
+	// simulation.alpha(1).restart();
 	
-	console.log("NEW:", nodes[i-1]);
+	// console.log("NEW:", nodes[i-1]);
 	return nodes[i-1];
 }
 
@@ -101,6 +102,7 @@ function render() {
 		.attr('y2', function (d) { return d.target.y })
 
 	l.exit().remove()
+
 }
 
 function api_url(param){
@@ -112,13 +114,13 @@ function load_nodes_under(node_id){
 	d3.json(api_url(node_id), function(odata){
 		odata.group.id = odata.group.name;
 		var new_center = add_node(odata.group, center_node ? center_node : false);
+		center_on_node(new_center);
 
 		odata.related_groups.forEach(function (g) {
 			g.id = g.name;
 			add_node(g, new_center);
 		});
 		
-		center_on_node(new_center);
 	});
 }
 
